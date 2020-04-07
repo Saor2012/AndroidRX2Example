@@ -12,4 +12,5 @@ public interface IInteractor {
     Flowable<Entry> listener(String string);
     Flowable<List<Entry>> listenerList();
     Completable delete(String string);
+    Completable deleteList();
 }

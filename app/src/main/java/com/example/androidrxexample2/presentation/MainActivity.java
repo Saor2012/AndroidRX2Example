@@ -1,6 +1,7 @@
 package com.example.androidrxexample2.presentation;
 
 import android.os.Bundle;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatButton;
@@ -9,6 +10,9 @@ import androidx.appcompat.widget.AppCompatTextView;
 
 import com.example.androidrxexample2.R;
 import com.example.androidrxexample2.presentation.base.BaseActivity;
+import com.example.androidrxexample2.presentation.base.Router;
+
+import timber.log.Timber;
 
 public class MainActivity extends BaseActivity implements MainContract.View {
     private MainContract.Presenter presenter;
@@ -28,6 +32,7 @@ public class MainActivity extends BaseActivity implements MainContract.View {
 
     @Override
     protected void createView(@Nullable Bundle savedInstanceState) {
+//        Router.getInstance().initView(this);
         presenter = new Presenter();
         textInput = findViewById(R.id.output);
         editKeyOutput = findViewById(R.id.enterKey);
@@ -41,8 +46,16 @@ public class MainActivity extends BaseActivity implements MainContract.View {
         btnCancel.setOnClickListener(v ->{
             presenter.onClickCancel();
         });
+        btnCancel.setOnLongClickListener(v -> {
+            presenter.onLongClickCancel();
+            return false;
+        });
         btnDelete.setOnClickListener(v ->{
-            presenter.onClickCancel();
+            presenter.onClickDelete();
+        });
+        btnDelete.setOnLongClickListener(v ->{
+            presenter.onLongClickDelete();
+            return false;
         });
     }
 
@@ -63,17 +76,17 @@ public class MainActivity extends BaseActivity implements MainContract.View {
 
     @Override
     protected void stopView() {
-
+        Timber.e("OnStopView");
     }
 
     @Override
     protected void resumeView() {
-
+        Timber.e("OnResumeView");
     }
 
     @Override
     protected void pauseView() {
-
+        Timber.e("OnPauseView");
     }
 
 
@@ -95,5 +108,20 @@ public class MainActivity extends BaseActivity implements MainContract.View {
     @Override
     public void clearView() {
         textInput.setText("");
+    }
+
+    @Override
+    public void toast(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void transactionActivity(Class<?> c) {
+
+    }
+
+    @Override
+    public void transactionActivity2(Class<?> c) {
+
     }
 }

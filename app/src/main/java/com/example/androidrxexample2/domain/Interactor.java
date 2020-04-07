@@ -74,8 +74,11 @@ public class Interactor implements IInteractor {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                         if (entry.size() > 1) {
                             entry.forEach(item -> {
-                                if (item.getDate().equals("")) {
-                                    item.setValue(item.getValue().concat(date));
+                                if (!item.getValue().equals("")) {
+                                    if (item.getDate().equals("")) {
+    //                                    item.setValue(item.getValue().concat(date));
+                                        item.setDate(date);
+                                    }
                                 }
                             });
                         } else entry.get(0).setValue(entry.get(0).getValue().concat(date));
@@ -90,11 +93,18 @@ public class Interactor implements IInteractor {
     @SuppressLint("CheckResult")
     @Override
     public Completable delete(String key) {
-        return Completable.defer(() ->
-                Completable.fromAction(() ->  repository.delete(key)))
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .doOnError(Timber::e);
+        return repository.delete(key)
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .doOnError(Timber::e);
+    }
+
+    @Override
+    public Completable deleteList() {
+        return repository.deleteList()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .doOnError(Timber::e);
     }
 
     private Flowable<String> date(){

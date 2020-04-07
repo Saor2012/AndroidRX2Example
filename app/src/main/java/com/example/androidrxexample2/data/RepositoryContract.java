@@ -12,4 +12,5 @@ public interface RepositoryContract {
     Flowable<Entry> listener(String string);
     Flowable<List<Entry>> listenerList();
     Completable delete(String key);
+    Completable deleteList();
 }

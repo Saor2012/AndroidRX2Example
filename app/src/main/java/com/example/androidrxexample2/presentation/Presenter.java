@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observable;
+import io.reactivex.Observer;
 import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
@@ -28,7 +29,9 @@ public class Presenter implements MainContract.Presenter {
     private IInteractor interactor;
     private String data;
     private Disposable disposable;
+    private int curremtOreration = -1, isHide = 0;
 
+    private List<Entry> list;
 
     public Presenter() {
         interactor = new Interactor();
@@ -44,6 +47,7 @@ public class Presenter implements MainContract.Presenter {
                 @Override
                 public void onNext(List<Entry> entries) {
                     Timber.e("listenerList onNext list size %s",entries.size());
+                    list = entries;
                     if (entries.size() > 0) isReady[0] = 1;
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                         if (entries.size() > 1) {
@@ -53,10 +57,10 @@ public class Presenter implements MainContract.Presenter {
                             entries.forEach(item -> {
                                 if (index[0] < 5) {
                                     response[0] += item.getValue().concat(item.getDate().equals("") ? " - " : item.getDate() + " - ").concat(item.getKeyId()).concat("\n");
-                                    Timber.e("Value: %s", item.getValue());
+                                   /* Timber.e("Value: %s", item.getValue());
                                     Timber.e("Date: %s", item.getDate());
                                     Timber.e("Index: %s", index[0]);
-                                    Timber.e("Text: %s", response[0]); //<---
+                                    Timber.e("Text: %s", response[0]); //<---*/
                                 }
                                 index[0] += 1;
                             });
@@ -101,21 +105,27 @@ public class Presenter implements MainContract.Presenter {
     private void selectOper(int oper) {
         switch (oper){
             case 1 :
+                curremtOreration = 1;
                 singleJust();
                 break;
             case 2:
+                curremtOreration = 2;
                 obsInterval();
                 break;
             case 3:
+                curremtOreration = 3;
                 zip();
                 break;
             case 4:
+                curremtOreration = 4;
                 megre();
                 break;
             case 5:
+                curremtOreration = 5;
                 listener();
                 break;
             case 6:
+                curremtOreration = 6;
                 add();
                 break;
             default: throw new NullPointerException();
@@ -223,9 +233,14 @@ public class Presenter implements MainContract.Presenter {
         });
     }
 
+    private Observable<String> convert(Long value) {
+        return Observable.just(value)
+                .map(v -> String.valueOf(value).concat(" ").concat("test"));
+    }
+
     private void singleJust(){
         Timber.e("before Single");
-        Single.just(data)
+        /*Single.just(data)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new DisposableSingleObserver<String>() {
@@ -240,7 +255,29 @@ public class Presenter implements MainContract.Presenter {
                     public void onError(Throwable e) {
                         Timber.e("onError Single");
                     }
-                });
+                });*/
+        Observable.just("Text")
+            .timestamp()
+            .concatMap(v -> {
+                return Observable.interval(1, TimeUnit.SECONDS, Schedulers.io())
+                    .concatMap(val -> convert(val));
+            }).observeOn(AndroidSchedulers.mainThread())
+            .subscribe(new DisposableObserver<String>() {
+                @Override
+                public void onNext(String s) {
+                    Timber.e("onNext: %s", s);
+                }
+
+                @Override
+                public void onError(Throwable e) {
+                    Timber.e("onError: %s", e);
+                }
+
+                @Override
+                public void onComplete() {
+                    Timber.e("onComplete");
+                }
+            });
         Timber.e("after Single");
 //           Single<String> singleA = Single.just(data);
 //           Single<String> singleB = Single.just(data);
@@ -324,9 +361,96 @@ public class Presenter implements MainContract.Presenter {
                         Timber.e(e);
                     }
                 });
+            /*interactor.listenerList().subscribe(new DisposableSubscriber<List<Entry>>() {
+                @Override
+                public void onNext(List<Entry> entries) {
+                    Timber.e("onClickDelete() > listenerList onNext list size %s",entries.size());
+                    if (list.size() == entries.size()) {
+                        Timber.e("Exeption at delete");
+                    } else {
+                        Timber.e("Complete at delete");
+                        Timber.e("Value: %s", entries.toString());
+                    }
+                }
+
+                @Override
+                public void onError(Throwable t) {
+                    Timber.e(t);
+                }
+
+                @Override
+                public void onComplete() {
+                    Timber.e("interactor.listenerList onComplete");
+                }
+            });*/
         } else {
             view.setView("Введіть ключ");
             Timber.e("Check out key for delete item");
+        }
+    }
+
+    @Override
+    public void onLongClickCancel() {
+        if (isHide == 0) {
+            isHide = 1;
+            view.setView(list.get(0).getValue().concat(list.get(0).getDate() + " - ").concat(list.get(0).getKeyId()).concat("\n"));
+        } else {
+            isHide = 0;
+            final String[] value = {""};
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                list.forEach(item -> {
+                    value[0] += item.getValue().concat(item.getDate().equals("") ? " - " : item.getDate() + " - ").concat(item.getKeyId()).concat("\n");
+                });
+            } else {
+                for (int i = 0; i < list.size(); i++) {
+                    value[0] += list.get(i).getValue().concat(list.get(i).getDate().equals("") ? " - " : list.get(i).getDate() + " - ").concat(list.get(i).getKeyId()).concat("\n");
+                }
+            }
+            view.setView(value[0]);
+        }
+    }
+
+    @Override
+    public void onLongClickDelete() {
+        String lastStr = view.getText();
+        if (view.getKey().equals("KEY2")) {
+            interactor.deleteList()
+                .subscribe(new DisposableCompletableObserver() {
+                    @Override
+                    public void onComplete() {
+                        Timber.e("onLongClickDelete() onComplete");
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Timber.e("onLongClickDelete onError: %s", e);
+                    }
+                });
+            view.setView("");
+        } else {
+            view.setView("Введіть головний ключ");
+            Timber.e("Check out main key for delete item");
+            Observable.timer(4, TimeUnit.SECONDS, Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new DisposableObserver<Long>() {
+                    @Override
+                    public void onNext(Long aLong) {
+                        if (aLong == 0) {
+                            view.setView(lastStr);
+                        }
+                        Timber.e("onLongClickDelete() onNext: %s", aLong);
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Timber.e("onLongClickDelete onError: %s", e);
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        Timber.e("onLongClickDelete() onComplete");
+                    }
+                });
         }
     }
 }

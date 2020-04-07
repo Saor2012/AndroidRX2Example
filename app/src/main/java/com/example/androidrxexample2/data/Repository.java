@@ -33,4 +33,10 @@ public class Repository implements RepositoryContract {
         return App.localeStorage().deleteEntry(key)
                 .doOnError(throwable -> Timber.e("Error App.localeStorage().deleteEntry(key) - %s", throwable.getMessage()));
     }
+
+    @Override
+    public Completable deleteList() {
+        return App.localeStorage().deleteEntryList()
+                .doOnError(throwable -> Timber.e("Error App.localeStorage().deleteEntryList() - %s", throwable.getMessage()));
+    }
 }

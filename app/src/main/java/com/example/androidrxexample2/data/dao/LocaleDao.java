@@ -29,4 +29,7 @@ public interface LocaleDao {
 
     @Query("DELETE FROM entry_model2 WHERE keyId = :key")
     Completable deleteEntry(String key);
+
+    @Query("DELETE FROM entry_model2")
+    Completable deleteEntryList();
 }
